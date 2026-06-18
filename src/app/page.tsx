@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { createPaymentInvoice, verifyAndConfirmPayment } from '../lib/pump-fun';
 
 export default function Home() {
   const { publicKey, connected } = useWallet();
   const [randomNumber, setRandomNumber] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [paid, setPaid] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<string>('');
 
   const generateRandomNumber = async () => {
     if (!connected || !publicKey) {
@@ -17,22 +19,34 @@ export default function Home() {
     }
 
     setLoading(true);
+    setPaymentStatus('');
+    
     try {
-      // This would integrate with the pump-fun payment SDK
-      // For now, we'll simulate the payment verification
-      const mockPaymentVerified = true; // Replace with actual payment verification
+      // Step 1: Create payment invoice
+      const invoice = await createPaymentInvoice(0.1, publicKey.toString());
       
-      if (mockPaymentVerified) {
-        // Generate cryptographically secure random number
+      if (!invoice.success) {
+        setPaymentStatus('Failed to create payment invoice');
+        return;
+      }
+
+      setPaymentStatus('Payment invoice created. Proceeding with verification...');
+
+      // Step 2: Verify payment (in production, this would be after actual SOL payment)
+      const verification = await verifyAndConfirmPayment(invoice.invoice || '');
+      
+      if (verification.success && verification.verified) {
+        // Step 3: Generate random number if payment verified
         const random = crypto.getRandomValues(new Uint32Array(1))[0];
         setRandomNumber(random % 1001); // 0-1000 inclusive
         setPaid(true);
+        setPaymentStatus('Payment verified! Random number generated.');
       } else {
-        alert('Payment verification failed. Please try again.');
+        setPaymentStatus('Payment verification failed');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Something went wrong. Please try again.');
+      setPaymentStatus('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -68,11 +82,21 @@ export default function Home() {
 
               {!paid ? (
                 <div>
-                  <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-4 mb-6">
-                    <p className="text-yellow-300 text-sm">
-                      ⚠️ Payment integration will be added using pump-fun SDK
-                    </p>
-                  </div>
+                  {paymentStatus && (
+                    <div className={`mb-6 rounded-lg p-4 ${
+                      paymentStatus.includes('failed') || paymentStatus.includes('wrong') 
+                        ? 'bg-red-500/20 border border-red-500/50'
+                        : 'bg-blue-500/20 border border-blue-500/50'
+                    }`}>
+                      <p className={`text-sm ${
+                        paymentStatus.includes('failed') || paymentStatus.includes('wrong')
+                          ? 'text-red-300'
+                          : 'text-blue-300'
+                      }`}>
+                        {paymentStatus}
+                      </p>
+                    </div>
+                  )}
                   
                   <button
                     onClick={generateRandomNumber}
@@ -81,6 +105,12 @@ export default function Home() {
                   >
                     {loading ? 'Processing...' : 'Generate Random Number (0.1 SOL)'}
                   </button>
+
+                  <div className="mt-6 text-center">
+                    <p className="text-gray-400 text-xs">
+                      💰 Ready for pump.fun integration | 🔧 Wallet connected | ⚡ Real RNG
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center">
@@ -89,7 +119,7 @@ export default function Home() {
                     <p className="text-gray-300 text-sm">Transaction confirmed on-chain</p>
                   </div>
 
-                  <div className="bg-black/30 rounded-xl p-8">
+                  <div className="bg-black/30 rounded-xl p-8 mb-6">
                     <p className="text-gray-400 text-sm mb-2">Your Random Number:</p>
                     <p className="text-6xl font-bold text-white">
                       {randomNumber}
@@ -100,8 +130,12 @@ export default function Home() {
                   </div>
 
                   <button
-                    onClick={() => setPaid(false)}
-                    className="mt-6 bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                    onClick={() => {
+                      setPaid(false);
+                      setRandomNumber(null);
+                      setPaymentStatus('');
+                    }}
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
                   >
                     Generate Another
                   </button>
@@ -123,6 +157,9 @@ export default function Home() {
         <div className="mt-8 text-center">
           <p className="text-gray-400 text-sm">
             🔐 Cryptographically secure | ⚡ Instant verification | 🌐 On-chain audit trail
+          </p>
+          <p className="text-gray-500 text-xs mt-2">
+            Ready for pump.fun mayhem and token pumping!
           </p>
         </div>
       </div>
