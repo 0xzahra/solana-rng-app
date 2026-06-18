@@ -1,0 +1,26 @@
+1|[build]
+2|  base = "/"
+3|  command = "chmod +x netlify/build.sh && netlify/build.sh"
+4|  publish = ".next"
+5|
+6|[build.environment]
+7|  NODE_VERSION = "18"
+8|
+9|[[redirects]]
+10|  from = "/api/*"
+11|  to = "/.netlify/functions/:splat"
+12|  status = 200
+13|
+14|[[headers]]
+15|  for = "/*"
+16|  [headers.values]
+17|    X-Frame-Options = "DENY"
+18|    X-XSS-Protection = "1; mode=block"
+19|    X-Content-Type-Options = "nosniff"
+20|
+21|[context.production]
+22|  [context.production.environment]
+23|    SOLANA_RPC_URL = "https://rpc.mainnet-beta.solana.com"
+24|    NEXT_PUBLIC_SOLANA_RPC_URL = "https://rpc.mainnet-beta.solana.com"
+    AGENT_TOKEN_MINT_ADDRESS = "47gg3F...pn"
+25|    AGENT_TOKEN_MINT_ADDRESS = "47gg3F...pp"
