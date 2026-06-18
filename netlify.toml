@@ -22,3 +22,4 @@
   [context.production.environment]
     SOLANA_RPC_URL = "https://rpc.mainnet-beta.solana.com"
     NEXT_PUBLIC_SOLANA_RPC_URL = "https://rpc.mainnet-beta.solana.com"
+    AGENT_TOKEN_MINT_ADDRESS = "47gg3Ff2Ca8Cym84RTR2YR4PEeoRe1HwJhCZ135mpump"
